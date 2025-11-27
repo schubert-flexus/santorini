@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Santorini Tests</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-results {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .test {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border-left: 4px solid #ccc;
+        }
+        .test.pass {
+            background: #e8f5e9;
+            border-left-color: #4CAF50;
+        }
+        .test.fail {
+            background: #ffebee;
+            border-left-color: #f44336;
+        }
+        .test-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .test-error {
+            color: #d32f2f;
+            font-family: monospace;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .summary {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 4px;
+        }
+        .summary.all-pass {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .summary.some-fail {
+            background: #ffebee;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <h1>Santorini Game Tests</h1>
+    <div id="test-results" class="test-results">
+        Running tests...
+    </div>
+
+    <script src="game.js"></script>
+    <script src="tests.js"></script>
+</body>
+</html>
