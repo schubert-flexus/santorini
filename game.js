@@ -368,4 +368,7 @@ class SantoriniGame {
     }
 }
 
-const game = new SantoriniGame();
+// Only instantiate the game if we're in the actual game environment (not tests)
+if (typeof window !== 'undefined' && document.getElementById('board')) {
+    const game = new SantoriniGame();
+}
