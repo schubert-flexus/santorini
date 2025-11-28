@@ -14,6 +14,12 @@ class SantoriniGame {
         this.aiDifficulty = 'easy';
         this.ai = null;
 
+        // God power preferences (can be 'random')
+        this.godPreferences = {
+            1: 'none',
+            2: 'none'
+        };
+
         // God powers for each player
         this.godPowers = {
             1: new NoGod(1),
@@ -104,8 +110,24 @@ class SantoriniGame {
         }
     }
 
+    getRandomGod() {
+        const gods = ['none', 'pan', 'apollo', 'athena', 'demeter'];
+        const randomIndex = Math.floor(Math.random() * gods.length);
+        return gods[randomIndex];
+    }
+
     setGodPower(player, godName) {
-        switch(godName) {
+        // Store the preference (including 'random')
+        this.godPreferences[player] = godName;
+
+        // If random, pick a random god
+        let actualGod = godName;
+        if (godName === 'random') {
+            actualGod = this.getRandomGod();
+        }
+
+        // Set the god power based on actual selection
+        switch(actualGod) {
             case 'pan':
                 this.godPowers[player] = new Pan(player);
                 break;
@@ -126,7 +148,14 @@ class SantoriniGame {
     updateGodDescription(player) {
         const descriptionElement = document.getElementById(`player${player}-god-description`);
         if (descriptionElement) {
-            descriptionElement.textContent = this.godPowers[player].description;
+            let description = this.godPowers[player].description;
+
+            // If random was selected, show which god was chosen
+            if (this.godPreferences[player] === 'random') {
+                description = `[Random: ${this.godPowers[player].name}] ${description}`;
+            }
+
+            descriptionElement.textContent = description;
         }
     }
 
@@ -537,6 +566,12 @@ class SantoriniGame {
         this.selectedCell = null;
         this.workerToMove = null;
         this.moveFrom = null;
+
+        // Re-apply god powers (will re-randomize if 'random' was selected)
+        this.setGodPower(1, this.godPreferences[1]);
+        this.setGodPower(2, this.godPreferences[2]);
+        this.updateGodDescription(1);
+        this.updateGodDescription(2);
 
         this.render();
         this.updateStatus();
