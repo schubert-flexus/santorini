@@ -365,4 +365,137 @@ runner.test('Reset clears the game state', (assert) => {
     assert.assertEquals(game.board[0][1].height, 0, 'Building heights should be reset');
 });
 
+// Apollo God Power Tests
+runner.test('Apollo can swap with opponent worker', (assert) => {
+    const game = createMockGame();
+
+    // Set up Apollo for player 2
+    game.godPowers[2] = new Apollo(2);
+
+    // Place workers
+    game.board[2][2].worker = 1;  // Player 1 at (2,2)
+    game.board[2][3].worker = 2;  // Player 2 at (2,3)
+
+    // Execute Apollo swap
+    game.godPowers[2].executeMove(game, 2, 3, 2, 2);
+
+    assert.assertEquals(game.board[2][2].worker, 2, 'Apollo worker should be at (2,2) after swap');
+    assert.assertEquals(game.board[2][3].worker, 1, 'Opponent worker should be at (2,3) after swap');
+});
+
+runner.test('Apollo overrideIsValidMove allows swapping with opponent', (assert) => {
+    const game = createMockGame();
+
+    // Set up Apollo for player 2
+    game.godPowers[2] = new Apollo(2);
+
+    // Place workers
+    game.board[2][2].worker = 1;  // Player 1 at (2,2)
+    game.board[2][3].worker = 2;  // Player 2 at (2,3)
+
+    // Check that Apollo can move to opponent's space
+    const canSwap = game.godPowers[2].overrideIsValidMove(game, 2, 3, 2, 2);
+
+    assert.assertTrue(canSwap, 'Apollo should be able to move to opponent worker space');
+});
+
+runner.test('AI getValidBuildsAfterMove preserves board state', (assert) => {
+    const game = createMockGame();
+    const ai = new SantoriniAI(2);
+
+    // Set up board
+    game.board[1][1].worker = 1;  // Player 1 at (1,1)
+    game.board[1][2].worker = 2;  // Player 2 at (1,2)
+    game.phase = 'move';
+    game.currentPlayer = 2;
+
+    // Save original state
+    const originalPlayer1Worker = game.board[1][1].worker;
+    const originalPlayer2Worker = game.board[1][2].worker;
+
+    // Call getValidBuildsAfterMove (simulates evaluating a move)
+    const worker = { row: 1, col: 2 };
+    const moveTo = { row: 1, col: 3 };
+    const validBuilds = ai.getValidBuildsAfterMove(game, worker, moveTo);
+
+    // Board state should be preserved
+    assert.assertEquals(game.board[1][1].worker, originalPlayer1Worker, 'Player 1 worker should still be at (1,1)');
+    assert.assertEquals(game.board[1][2].worker, originalPlayer2Worker, 'Player 2 worker should still be at (1,2)');
+    assert.assertEquals(game.board[1][3].worker, null, 'Target cell should still be empty');
+});
+
+runner.test('AI getValidBuildsAfterMove with Apollo preserves opponent worker', (assert) => {
+    const game = createMockGame();
+    const ai = new SantoriniAI(2);
+
+    // Set up Apollo for player 2
+    game.godPowers[2] = new Apollo(2);
+
+    // Set up board for potential Apollo swap
+    game.board[1][1].worker = 1;  // Player 1 at (1,1)
+    game.board[1][2].worker = 2;  // Player 2 at (1,2)
+    game.phase = 'move';
+    game.currentPlayer = 2;
+
+    // Call getValidBuildsAfterMove to evaluate swapping with opponent
+    const worker = { row: 1, col: 2 };
+    const moveTo = { row: 1, col: 1 };  // Try to swap with opponent
+    const validBuilds = ai.getValidBuildsAfterMove(game, worker, moveTo);
+
+    // Critical: Board state should be preserved (this was the bug!)
+    assert.assertEquals(game.board[1][1].worker, 1, 'Player 1 worker should NOT disappear after evaluation');
+    assert.assertEquals(game.board[1][2].worker, 2, 'Player 2 worker should still be at (1,2)');
+});
+
+runner.test('AI getValidBuildsAfterMoveCloned preserves opponent worker', (assert) => {
+    const game = createMockGame();
+    const ai = new SantoriniAI(2);
+
+    // Set up Apollo for player 2
+    game.godPowers[2] = new Apollo(2);
+
+    // Set up board for potential Apollo swap
+    game.board[1][1].worker = 1;  // Player 1 at (1,1)
+    game.board[1][2].worker = 2;  // Player 2 at (1,2)
+    game.phase = 'move';
+    game.currentPlayer = 2;
+
+    // Call getValidBuildsAfterMoveCloned to evaluate swapping with opponent
+    const worker = { row: 1, col: 2 };
+    const moveTo = { row: 1, col: 1 };  // Try to swap with opponent
+    const validBuilds = ai.getValidBuildsAfterMoveCloned(game, worker, moveTo, 2);
+
+    // Critical: Board state should be preserved
+    assert.assertEquals(game.board[1][1].worker, 1, 'Player 1 worker should NOT disappear after evaluation');
+    assert.assertEquals(game.board[1][2].worker, 2, 'Player 2 worker should still be at (1,2)');
+});
+
+runner.test('AI getAllPossibleMoves with Apollo does not corrupt board', (assert) => {
+    const game = createMockGame();
+    const ai = new SantoriniAI(2);
+
+    // Set up Apollo for player 2
+    game.godPowers[2] = new Apollo(2);
+
+    // Set up board
+    game.board[1][1].worker = 1;  // Player 1 at (1,1)
+    game.board[1][2].worker = 1;  // Player 1 at (1,2)
+    game.board[2][1].worker = 2;  // Player 2 at (2,1)
+    game.board[2][2].worker = 2;  // Player 2 at (2,2)
+    game.phase = 'move';
+    game.currentPlayer = 2;
+
+    // Get all possible moves (this will evaluate many moves including potential swaps)
+    const possibleMoves = ai.getAllPossibleMoves(game);
+
+    // Board state should be completely preserved
+    assert.assertEquals(game.board[1][1].worker, 1, 'Player 1 worker at (1,1) should not disappear');
+    assert.assertEquals(game.board[1][2].worker, 1, 'Player 1 worker at (1,2) should not disappear');
+    assert.assertEquals(game.board[2][1].worker, 2, 'Player 2 worker at (2,1) should be preserved');
+    assert.assertEquals(game.board[2][2].worker, 2, 'Player 2 worker at (2,2) should be preserved');
+
+    // Should have moves available
+    assert.assertTrue(possibleMoves.length > 0, 'Should have possible moves available');
+});
+
 runner.run();
