@@ -14,6 +14,12 @@ class SantoriniGame {
         this.aiDifficulty = 'easy';
         this.ai = null;
 
+        // God powers for each player
+        this.godPowers = {
+            1: new NoGod(1),
+            2: new NoGod(2)
+        };
+
         this.initBoard();
         this.attachEventListeners();
         this.updateStatus();
@@ -149,21 +155,26 @@ class SantoriniGame {
             }
         } else {
             if (this.isValidMove(this.selectedWorker.row, this.selectedWorker.col, row, col)) {
-                const fromHeight = this.board[this.selectedWorker.row][this.selectedWorker.col].height;
+                const fromRow = this.selectedWorker.row;
+                const fromCol = this.selectedWorker.col;
+                const fromHeight = this.board[fromRow][fromCol].height;
 
                 this.board[row][col].worker = this.currentPlayer;
-                this.board[this.selectedWorker.row][this.selectedWorker.col].worker = null;
+                this.board[fromRow][fromCol].worker = null;
 
-                this.moveFrom = { row: this.selectedWorker.row, col: this.selectedWorker.col };
+                this.moveFrom = { row: fromRow, col: fromCol };
                 this.workerToMove = { row, col };
 
-                const toHeight = this.board[row][col].height;
-                if (fromHeight === 2 && toHeight === 3) {
+                // Check win conditions
+                if (this.checkWinCondition(fromRow, fromCol, row, col)) {
                     this.render();
                     this.updateStatus(`Player ${this.currentPlayer} wins!`);
                     this.phase = 'gameover';
                     return;
                 }
+
+                // Call god power hook after move
+                this.godPowers[this.currentPlayer].onAfterMove(this, fromRow, fromCol, row, col);
 
                 this.selectedWorker = null;
                 this.selectedCell = { row, col };
@@ -175,9 +186,28 @@ class SantoriniGame {
         }
     }
 
+    checkWinCondition(fromRow, fromCol, toRow, toCol) {
+        // Standard win condition: move from level 2 to level 3
+        const fromHeight = this.board[fromRow][fromCol].height || 0;
+        const toHeight = this.board[toRow][toCol].height;
+
+        if (fromHeight === 2 && toHeight === 3) {
+            return true;
+        }
+
+        // Check god power alternative win conditions
+        const move = {
+            worker: { row: fromRow, col: fromCol },
+            moveTo: { row: toRow, col: toCol }
+        };
+
+        return this.godPowers[this.currentPlayer].checkWinCondition(this, move);
+    }
+
     handleBuild(row, col) {
         if (this.isValidBuild(this.workerToMove.row, this.workerToMove.col, row, col)) {
             const cell = this.board[row][col];
+            const previousPlayer = this.currentPlayer;
 
             if (cell.height < 3) {
                 cell.height++;
@@ -185,11 +215,20 @@ class SantoriniGame {
                 cell.dome = true;
             }
 
+            // Call god power hook after build
+            this.godPowers[previousPlayer].onAfterBuild(this, row, col);
+
+            // Call god power turn end hook
+            this.godPowers[previousPlayer].onTurnEnd(this);
+
             this.currentPlayer = this.currentPlayer === 1 ? 2 : 1;
             this.phase = 'move';
             this.selectedCell = null;
             this.workerToMove = null;
             this.moveFrom = null;
+
+            // Call god power turn start hook for new player
+            this.godPowers[this.currentPlayer].onTurnStart(this);
 
             this.render();
             this.updateStatus();
@@ -225,6 +264,16 @@ class SantoriniGame {
     }
 
     isValidMove(fromRow, fromCol, toRow, toCol) {
+        // Check if god power overrides move validation
+        const worker = this.board[fromRow][fromCol].worker;
+        if (worker && this.godPowers[worker]) {
+            const override = this.godPowers[worker].overrideIsValidMove(this, fromRow, fromCol, toRow, toCol);
+            if (override !== null) {
+                return override;
+            }
+        }
+
+        // Standard move validation
         if (fromRow === toRow && fromCol === toCol) return false;
 
         const rowDiff = Math.abs(toRow - fromRow);
@@ -243,6 +292,16 @@ class SantoriniGame {
     }
 
     isValidBuild(fromRow, fromCol, toRow, toCol) {
+        // Check if god power overrides build validation
+        const worker = this.board[fromRow][fromCol].worker;
+        if (worker && this.godPowers[worker]) {
+            const override = this.godPowers[worker].overrideIsValidBuild(this, fromRow, fromCol, toRow, toCol);
+            if (override !== null) {
+                return override;
+            }
+        }
+
+        // Standard build validation
         if (fromRow === toRow && fromCol === toCol) return false;
 
         const rowDiff = Math.abs(toRow - fromRow);
@@ -258,7 +317,7 @@ class SantoriniGame {
     }
 
     getValidMoves(row, col) {
-        const validMoves = [];
+        let validMoves = [];
         for (let r = Math.max(0, row - 1); r <= Math.min(4, row + 1); r++) {
             for (let c = Math.max(0, col - 1); c <= Math.min(4, col + 1); c++) {
                 if (this.isValidMove(row, col, r, c)) {
@@ -266,11 +325,18 @@ class SantoriniGame {
                 }
             }
         }
+
+        // Allow god power to modify valid moves
+        const worker = this.board[row][col].worker;
+        if (worker && this.godPowers[worker]) {
+            validMoves = this.godPowers[worker].modifyValidMoves(this, row, col, validMoves);
+        }
+
         return validMoves;
     }
 
     getValidBuilds(row, col) {
-        const validBuilds = [];
+        let validBuilds = [];
         for (let r = Math.max(0, row - 1); r <= Math.min(4, row + 1); r++) {
             for (let c = Math.max(0, col - 1); c <= Math.min(4, col + 1); c++) {
                 if (this.isValidBuild(row, col, r, c)) {
@@ -278,6 +344,13 @@ class SantoriniGame {
                 }
             }
         }
+
+        // Allow god power to modify valid builds
+        const worker = this.board[row][col].worker;
+        if (worker && this.godPowers[worker]) {
+            validBuilds = this.godPowers[worker].modifyValidBuilds(this, row, col, validBuilds);
+        }
+
         return validBuilds;
     }
 

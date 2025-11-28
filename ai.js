@@ -286,8 +286,9 @@ class SantoriniAI {
             ),
             currentPlayer: game.currentPlayer,
             phase: game.phase,
-            getValidMoves: game.getValidMoves.bind({ board: null, isValidMove: game.isValidMove }),
-            getValidBuilds: game.getValidBuilds.bind({ board: null, isValidBuild: game.isValidBuild }),
+            godPowers: game.godPowers, // Reference to god powers (they don't change during simulation)
+            getValidMoves: game.getValidMoves.bind({ board: null, isValidMove: game.isValidMove, godPowers: game.godPowers }),
+            getValidBuilds: game.getValidBuilds.bind({ board: null, isValidBuild: game.isValidBuild, godPowers: game.godPowers }),
             isValidMove: game.isValidMove,
             isValidBuild: game.isValidBuild
         };
