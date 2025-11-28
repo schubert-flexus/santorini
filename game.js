@@ -22,6 +22,8 @@ class SantoriniGame {
 
         this.initBoard();
         this.attachEventListeners();
+        this.updateGodDescription(1);
+        this.updateGodDescription(2);
         this.updateStatus();
     }
 
