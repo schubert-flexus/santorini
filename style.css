@@ -41,13 +41,25 @@ h1 {
 
 .setting-group {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .setting-group label {
     font-weight: bold;
     color: #333;
+}
+
+.god-description {
+    font-size: 0.85em;
+    color: #666;
+    font-style: italic;
+    padding: 8px 12px;
+    background: #fff;
+    border-left: 3px solid #667eea;
+    border-radius: 3px;
+    min-width: 250px;
+    line-height: 1.4;
 }
 
 .setting-group select {

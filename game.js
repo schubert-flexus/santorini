@@ -87,6 +87,7 @@ class SantoriniGame {
         if (player1GodElement) {
             player1GodElement.addEventListener('change', (e) => {
                 this.setGodPower(1, e.target.value);
+                this.updateGodDescription(1);
                 this.reset();
             });
         }
@@ -95,6 +96,7 @@ class SantoriniGame {
         if (player2GodElement) {
             player2GodElement.addEventListener('change', (e) => {
                 this.setGodPower(2, e.target.value);
+                this.updateGodDescription(2);
                 this.reset();
             });
         }
@@ -116,6 +118,13 @@ class SantoriniGame {
                 break;
             default:
                 this.godPowers[player] = new NoGod(player);
+        }
+    }
+
+    updateGodDescription(player) {
+        const descriptionElement = document.getElementById(`player${player}-god-description`);
+        if (descriptionElement) {
+            descriptionElement.textContent = this.godPowers[player].description;
         }
     }
 
