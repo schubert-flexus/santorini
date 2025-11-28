@@ -378,14 +378,17 @@ class SantoriniAI {
         const originalCell = game.board[worker.row][worker.col];
         const targetCell = game.board[moveTo.row][moveTo.col];
 
+        // Save original state
         const originalWorker = originalCell.worker;
         const targetWorker = targetCell.worker;
 
+        // Simulate move (handles both standard moves and Apollo swaps)
         originalCell.worker = null;
         targetCell.worker = player;
 
         const validBuilds = game.getValidBuilds(moveTo.row, moveTo.col);
 
+        // Restore original state (important for Apollo swaps!)
         originalCell.worker = originalWorker;
         targetCell.worker = targetWorker;
 
@@ -455,13 +458,19 @@ class SantoriniAI {
         const originalCell = game.board[worker.row][worker.col];
         const targetCell = game.board[moveTo.row][moveTo.col];
 
+        // Save original state
+        const originalWorker = originalCell.worker;
+        const targetWorker = targetCell.worker;
+
+        // Simulate move
         originalCell.worker = null;
         targetCell.worker = this.playerNumber;
 
         const validBuilds = game.getValidBuilds(moveTo.row, moveTo.col);
 
-        originalCell.worker = this.playerNumber;
-        targetCell.worker = null;
+        // Restore original state (important for Apollo swaps!)
+        originalCell.worker = originalWorker;
+        targetCell.worker = targetWorker;
 
         return validBuilds;
     }
