@@ -230,6 +230,15 @@ class SantoriniGame {
             // Call god power turn start hook for new player
             this.godPowers[this.currentPlayer].onTurnStart(this);
 
+            // Check if current player has any valid moves
+            if (!this.hasValidMoves(this.currentPlayer)) {
+                this.phase = 'gameover';
+                const winner = this.currentPlayer === 1 ? 2 : 1;
+                this.render();
+                this.updateStatus(`Player ${winner} wins! Player ${this.currentPlayer} has no valid moves.`);
+                return;
+            }
+
             this.render();
             this.updateStatus();
 
@@ -237,6 +246,21 @@ class SantoriniGame {
                 setTimeout(() => this.aiTakeTurn(), 500);
             }
         }
+    }
+
+    hasValidMoves(player) {
+        // Find all workers for this player
+        for (let row = 0; row < 5; row++) {
+            for (let col = 0; col < 5; col++) {
+                if (this.board[row][col].worker === player) {
+                    const validMoves = this.getValidMoves(row, col);
+                    if (validMoves.length > 0) {
+                        return true; // Found at least one valid move
+                    }
+                }
+            }
+        }
+        return false; // No valid moves found
     }
 
     aiTakeTurn() {
