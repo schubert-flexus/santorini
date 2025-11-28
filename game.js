@@ -300,6 +300,12 @@ class SantoriniGame {
                 this.render();
                 this.highlightValidBuilds(this.workerToMove.row, this.workerToMove.col);
                 this.updateStatus();
+
+                // If AI needs to continue building, trigger it
+                if (this.gameMode === 'pve' && this.currentPlayer === 2) {
+                    setTimeout(() => this.aiContinueBuild(), 500);
+                }
+
                 return;
             }
 
@@ -370,6 +376,26 @@ class SantoriniGame {
                 this.handleBuild(move.buildAt.row, move.buildAt.col);
             }, 500);
         }, 500);
+    }
+
+    aiContinueBuild() {
+        if (this.phase !== 'build' || this.currentPlayer !== 2 || !this.workerToMove) {
+            return;
+        }
+
+        // Get valid builds for the current worker
+        const validBuilds = this.getValidBuilds(this.workerToMove.row, this.workerToMove.col);
+
+        if (validBuilds.length === 0) {
+            console.error('AI has no valid builds for second build');
+            return;
+        }
+
+        // Pick a random build location (simple strategy for second build)
+        const randomIndex = Math.floor(Math.random() * validBuilds.length);
+        const buildLocation = validBuilds[randomIndex];
+
+        this.handleBuild(buildLocation.row, buildLocation.col);
     }
 
     isValidMove(fromRow, fromCol, toRow, toCol) {
