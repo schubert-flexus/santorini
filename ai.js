@@ -322,9 +322,15 @@ class SantoriniAI {
     }
 
     applyMove(game, move) {
-        // Move worker
-        game.board[move.moveTo.row][move.moveTo.col].worker = game.board[move.worker.row][move.worker.col].worker;
-        game.board[move.worker.row][move.worker.col].worker = null;
+        // Execute move (respecting god powers like Apollo's swap)
+        const worker = game.board[move.worker.row][move.worker.col].worker;
+        if (game.godPowers && game.godPowers[worker]) {
+            game.godPowers[worker].executeMove(game, move.worker.row, move.worker.col, move.moveTo.row, move.moveTo.col);
+        } else {
+            // Standard move if no god power
+            game.board[move.moveTo.row][move.moveTo.col].worker = worker;
+            game.board[move.worker.row][move.worker.col].worker = null;
+        }
 
         // Build
         const buildCell = game.board[move.buildAt.row][move.buildAt.col];

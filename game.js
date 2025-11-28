@@ -82,6 +82,41 @@ class SantoriniGame {
                 this.aiDifficulty = e.target.value;
             });
         }
+
+        const player1GodElement = document.getElementById('player1-god');
+        if (player1GodElement) {
+            player1GodElement.addEventListener('change', (e) => {
+                this.setGodPower(1, e.target.value);
+                this.reset();
+            });
+        }
+
+        const player2GodElement = document.getElementById('player2-god');
+        if (player2GodElement) {
+            player2GodElement.addEventListener('change', (e) => {
+                this.setGodPower(2, e.target.value);
+                this.reset();
+            });
+        }
+    }
+
+    setGodPower(player, godName) {
+        switch(godName) {
+            case 'pan':
+                this.godPowers[player] = new Pan(player);
+                break;
+            case 'apollo':
+                this.godPowers[player] = new Apollo(player);
+                break;
+            case 'athena':
+                this.godPowers[player] = new Athena(player);
+                break;
+            case 'demeter':
+                this.godPowers[player] = new Demeter(player);
+                break;
+            default:
+                this.godPowers[player] = new NoGod(player);
+        }
     }
 
     handleCellClick(row, col) {
@@ -159,8 +194,8 @@ class SantoriniGame {
                 const fromCol = this.selectedWorker.col;
                 const fromHeight = this.board[fromRow][fromCol].height;
 
-                this.board[row][col].worker = this.currentPlayer;
-                this.board[fromRow][fromCol].worker = null;
+                // Execute the move (god powers can override this for special moves like Apollo's swap)
+                this.godPowers[this.currentPlayer].executeMove(this, fromRow, fromCol, row, col);
 
                 this.moveFrom = { row: fromRow, col: fromCol };
                 this.workerToMove = { row, col };
@@ -217,6 +252,16 @@ class SantoriniGame {
 
             // Call god power hook after build
             this.godPowers[previousPlayer].onAfterBuild(this, row, col);
+
+            // Check if god power wants to continue turn (e.g., Demeter's second build)
+            if (this.godPowers[previousPlayer].shouldContinueTurn(this)) {
+                // Stay in build phase, keep same player
+                this.selectedCell = { row: this.workerToMove.row, col: this.workerToMove.col };
+                this.render();
+                this.highlightValidBuilds(this.workerToMove.row, this.workerToMove.col);
+                this.updateStatus();
+                return;
+            }
 
             // Call god power turn end hook
             this.godPowers[previousPlayer].onTurnEnd(this);
@@ -311,6 +356,16 @@ class SantoriniGame {
 
         const fromCell = this.board[fromRow][fromCol];
         if (toCell.height > fromCell.height + 1) return false;
+
+        // Check Athena's effect: if opponent has Athena and moved up last turn, block upward moves
+        const opponentPlayer = worker === 1 ? 2 : 1;
+        const opponentGod = this.godPowers[opponentPlayer];
+        if (opponentGod && opponentGod.name === 'Athena' && opponentGod.movedUpLastTurn) {
+            // Block moving up
+            if (toCell.height > fromCell.height) {
+                return false;
+            }
+        }
 
         return true;
     }
