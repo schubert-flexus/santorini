@@ -35,35 +35,47 @@ class SantoriniGame {
     }
 
     attachEventListeners() {
-        document.getElementById('board').addEventListener('click', (e) => {
-            const cell = e.target.closest('.cell');
-            if (cell) {
-                const row = parseInt(cell.dataset.row);
-                const col = parseInt(cell.dataset.col);
-                this.handleCellClick(row, col);
-            }
-        });
+        const boardElement = document.getElementById('board');
+        if (boardElement) {
+            boardElement.addEventListener('click', (e) => {
+                const cell = e.target.closest('.cell');
+                if (cell) {
+                    const row = parseInt(cell.dataset.row);
+                    const col = parseInt(cell.dataset.col);
+                    this.handleCellClick(row, col);
+                }
+            });
+        }
 
-        document.getElementById('reset-btn').addEventListener('click', () => {
-            this.reset();
-        });
+        const resetBtn = document.getElementById('reset-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                this.reset();
+            });
+        }
 
-        document.getElementById('game-mode').addEventListener('change', (e) => {
-            this.gameMode = e.target.value;
-            const difficultyGroup = document.getElementById('difficulty-group');
-            if (this.gameMode === 'pve') {
-                difficultyGroup.style.display = 'flex';
-                this.ai = new SantoriniAI(2);
-            } else {
-                difficultyGroup.style.display = 'none';
-                this.ai = null;
-            }
-            this.reset();
-        });
+        const gameModeElement = document.getElementById('game-mode');
+        if (gameModeElement) {
+            gameModeElement.addEventListener('change', (e) => {
+                this.gameMode = e.target.value;
+                const difficultyGroup = document.getElementById('difficulty-group');
+                if (this.gameMode === 'pve') {
+                    difficultyGroup.style.display = 'flex';
+                    this.ai = new SantoriniAI(2);
+                } else {
+                    difficultyGroup.style.display = 'none';
+                    this.ai = null;
+                }
+                this.reset();
+            });
+        }
 
-        document.getElementById('ai-difficulty').addEventListener('change', (e) => {
-            this.aiDifficulty = e.target.value;
-        });
+        const aiDifficultyElement = document.getElementById('ai-difficulty');
+        if (aiDifficultyElement) {
+            aiDifficultyElement.addEventListener('change', (e) => {
+                this.aiDifficulty = e.target.value;
+            });
+        }
     }
 
     handleCellClick(row, col) {
